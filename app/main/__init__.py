@@ -5,3 +5,9 @@ from flask import Blueprint
 main = Blueprint('main', __name__)
 
 from . import views, errors
+from ..models import Permission
+
+# 将权限的常数传给模板系统
+@main.app_context_processor
+def inject_permissions():
+    return dict(Permission=Permission)

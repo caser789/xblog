@@ -6,12 +6,12 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or "xuejiao's blog"
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     MAIL_SERVER = 'smtp.163.com'
-    MAIL_PORT = 465 or 994 or 25
-    MAIL_USE_TLS = True 
-    MAIL_USERNAME = os.environ.get('_163_USERNAME') 
-    MAIL_PASSWORD = os.environ.get('_163_PASSWORD')
+    MAIL_PORT =  25 #465  994 or 25
+    MAIL_USE_TLS = False 
+    MAIL_USERNAME =  os.environ.get('_163_USERNAME') 
+    MAIL_PASSWORD =  os.environ.get('_163_PASSWORD')
     XBLOG_MAIL_SUBJECT_PREFIX = '[XBLOG]'
-    XBLOG_MAIL_SENDER = '薛蛟的博客 管理员 <m13488699851@sina.com>'
+    XBLOG_MAIL_SENDER = 'm13488699851@163.com'
     XBLOG_ADMIN = os.environ.get('XBLOG_ADMIN')
 
     @staticmethod

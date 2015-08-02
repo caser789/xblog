@@ -3,7 +3,7 @@ from . import db, login_manager
 # 导入处理密码hash的函数
 from werkzeug.security import generate_password_hash, check_password_hash
 # 处理用户登录
-from flask.ext.login import UserMixin
+from flask.ext.login import UserMixin, AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
 
@@ -11,25 +11,69 @@ from flask import current_app
 单独的数据库模块
 """
 
+# 定义权限对应的数
+class Permission:
+    FOLLOW = 0x01
+    COMMENT = 0x02
+    WRITE_ARTICLES = 0x04
+    MODERATE_COMMENTS = 0x08
+    ADMINISTER = 0x80
+
 # 用户角色表
-class Role(UserMixin, db.Model):
+class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True, index=True)
     users = db.relationship('User', backref='role', lazy='dynamic')
+    # 记录是否时默认的权限，在初始化用户时设定
+    default = db.Column(db.Boolean, default=False, index=True)
+    # 记录权限数字
+    permissions = db.Column(db.Integer)
 
     def __repr__(self):
         return '<Role %r>' % self.name
+
+    # 插入角色，静态方法
+    @staticmethod
+    def insert_roles():
+        roles = {
+            'User': (Permission.FOLLOW |
+                     Permission.COMMENT |
+                     Permission.WRITE_ARTICLES, True),
+            'Moderator': (Permission.FOLLOW |
+                          Permission.COMMENT | 
+                          Permission.WRITE_ARTICLES |
+                          Permission.MODERATE_COMMENTS, False),
+            'Administrator': (0xff, False)
+        }
+        for r in roles:
+            role = Role.query.filter_by(name=r).first()
+            if  role is None:
+                role = Role(name=r)
+            role.permissions = roles[r][0]
+            role.default = roles[r][1]
+            db.session.add(role)
+        db.session.commit()
     
     
 # 用户信息表
-class User(db.Model):
+class User(UserMixin,db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
     email = db.Column(db.String(64), unique=True, index=True)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     confirmed = db.Column(db.Boolean, default=False)
+
+    # 初始化用户，设定默认权限
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+        if not self.role:
+            if self.email == current_app.config['XBLOG_ADMIN']:
+                self.role = Role.query.filter_by(permission=0xff).first()
+            if not self.role:
+                self.role = Role.query.filter_by(default=True).first()
+
 
     # 储存密码的hash码
     password_hash = db.Column(db.String(128))
@@ -66,12 +110,31 @@ class User(db.Model):
         if data.get('confirm') != self.id:
             return False
         self.confirmed = True
-        db.sessionl.add(self)
+        db.session.add(self)
         return True
+
+    # 用户的权限
+    def can(self, permissions):
+        return self.role is not None and \
+            (self.role.permissions & permissions) == permissions
+
+    def is_administrator(self):
+        return self.can(Permission.ADMINISTER)
+
+# 匿名用户类的权限
+class AnonymousUser(AnonymousUserMixin):
+    def can(self, permissions):
+        return False
+
+    def is_administrator(self):
+        return False
+# 匿名用户的loader
+login_manager.anonymous_user = AnonymousUser
 
 # 根据用户ID得到用户对象
 # 登录
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 

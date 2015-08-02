@@ -23,7 +23,7 @@ def login():
             login_user(user, form.remember_me.data)
             return redirect(request.args.get('next') or 
                 url_for('main.index'))
-        flash('无效的用户名或者密码不正确')
+        flash(u'无效的用户名或者密码不正确')
     return render_template('auth/login.html', form=form)
 
 # 登出
@@ -31,7 +31,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash('您已经登出')
+    flash(u'您已经登出')
     return redirect(url_for('main.index'))
 
 
@@ -89,4 +89,4 @@ def before_request():
 def unconfirmed():
     if current_user.is_anonymous() or current_user.confirmed:
         return redirect(url_for('main.index'))
-    return render_template('auth/unconfirmed')
+    return render_template('auth/unconfirmed.html')
