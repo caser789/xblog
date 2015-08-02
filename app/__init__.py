@@ -33,5 +33,10 @@ def create_app(config_name):
     # 注册蓝图 main
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
+    
+    # 注册 蓝图 auth
+    # 设置 蓝图 对应的 URL 前缀
+    from .auth import auth as auth_blueprint
+    app.register_blueprint(auth_blueprint, url_prefix='/auth')
 
     return app
