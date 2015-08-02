@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}薛蛟的博客 - 请验证您的账号{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>
+        {{ current_user.username }}, 您好！
+    </h1>
+    <h3>
+        您还未验证您的账号。
+    </h3>
+    <p>
+        您需要前往您的邮箱，验证您的账号才可以访问此网站其他内容。
+    </p>
+    <p>
+        需要另一封验证信？
+        <a href="{{ url_for('auth.resend_confirmation') }}">点我</a>
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+尊敬的 {{ user.username }},
+
+欢迎访问"薛蛟的博客"
+
+请点击一下链接验证您的账号：
+
+{{ url_for('auth.confirm', token=token, _external=True) }}
+
+祝 好!
+
+薛蛟
+
+注意：请勿回复此邮件

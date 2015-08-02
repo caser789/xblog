@@ -1,0 +1,9 @@
+<p>{{ user.username }}, 您好！</p>
+<p>欢迎登录<b>薛蛟的博客</b></p>
+<p>请点击下面的链接验证您的账号：<a href="{{ url_for('auth.confirm', token=token,_external=True) }}">点我</a></p>
+<p>或者将下面的链接复制粘贴到浏览器地址栏浏览<br></p>
+<p>{{ url_for('auth.confirm', token=token, _external=True) }}</p>
+<p></p>
+<p>祝好,</p>
+<p>薛蛟</p>
+<p><small>请勿回复此邮件</small></p>
