@@ -7,7 +7,7 @@ from .models import Permission
 # 传入的参数时 model 中 Permission中的常数
 def permission_required(permission):
     def decorator(f):
-        @wrap(f)
+        @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.can(permission):
                 abort(403)

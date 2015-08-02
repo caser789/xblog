@@ -5,7 +5,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # 处理用户登录
 from flask.ext.login import UserMixin, AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from flask import current_app
+# current_app 从flask 中，而current_user 从login中
+from flask import current_app, request
+from datetime import datetime
+import hashlib
 
 """
 单独的数据库模块
@@ -64,6 +67,12 @@ class User(UserMixin,db.Model):
     email = db.Column(db.String(64), unique=True, index=True)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     confirmed = db.Column(db.Boolean, default=False)
+    # 详细个人信息
+    name = db.Column(db.String(64))
+    location = db.Column(db.String(64))
+    about_me = db.Column(db.Text())
+    member_since = db.Column(db.DateTime(), default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
 
     # 初始化用户，设定默认权限
     def __init__(self, **kwargs):
@@ -120,6 +129,22 @@ class User(UserMixin,db.Model):
 
     def is_administrator(self):
         return self.can(Permission.ADMINISTER)
+
+    # 刷新登录时间
+    def ping(self):
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
+
+    # 个人头像
+    def gravatar(self, size=100, default='identicon', rating='g'):
+        if request.is_secure:
+            url = 'https://secure.gravatar.com/avatar'
+        else:
+            url = 'http://www.gravatar.com/avatar'
+        hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
+        return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
+            url=url, hash=hash, size=size, default=default, rating=rating)
+
 
 # 匿名用户类的权限
 class AnonymousUser(AnonymousUserMixin):

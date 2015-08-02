@@ -78,11 +78,13 @@ def resend_confirmation():
 # 注册但是未验证的用户 只能访问 auth. 或者 static 或者 unconfirmed页面
 @auth.before_app_request
 def before_request():
-    if current_user.is_authenticated() \
-        and not current_user.confirmed \
-        and request.endpoint[:5] != 'auth.' \
-        and request.endpoint != 'static':
-        return redirect(url_for('auth.unconfirmed'))
+    if current_user.is_authenticated():
+        # 刷新 上次登录时间
+        current_user.ping() 
+        if not current_user.confirmed \
+            and request.endpoint[:5] != 'auth.' \
+            and request.endpoint != 'static':
+            return redirect(url_for('auth.unconfirmed'))
 
 # 未验证用户和非匿名用户只能访问 unconfirmed页面
 @auth.route('/unconfirmed')
