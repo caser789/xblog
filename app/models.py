@@ -73,15 +73,20 @@ class User(UserMixin,db.Model):
     about_me = db.Column(db.Text())
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
+    # 储存头像 的哈希码，减少载入页面时的计算
+    avatar_hash = db.Column(db.String(32))
 
     # 初始化用户，设定默认权限
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
+    #初始化角色
         if not self.role:
             if self.email == current_app.config['XBLOG_ADMIN']:
                 self.role = Role.query.filter_by(permission=0xff).first()
             if not self.role:
                 self.role = Role.query.filter_by(default=True).first()
+        if self.email and not self.avatar_hash:
+            self.avatar_hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
 
 
     # 储存密码的hash码
@@ -141,7 +146,7 @@ class User(UserMixin,db.Model):
             url = 'https://secure.gravatar.com/avatar'
         else:
             url = 'http://www.gravatar.com/avatar'
-        hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
+        hash = self.avatar_hash or hashlib.md5(self.email.encode('utf-8')).hexdigest()
         return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
             url=url, hash=hash, size=size, default=default, rating=rating)
 
