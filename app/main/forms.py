@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 from flask.ext.wtf import Form
+from flask.ext.pagedown.fields import PageDownField
 from wtforms import StringField, SubmitField, TextAreaField, BooleanField, \
     SelectField
 from wtforms.validators import Required, Length, Email, Regexp
@@ -53,3 +54,8 @@ class EditProfileAdminForm(Form):
         if filed.data != self.user.username and \
             User.query.filter_by(username=field.data).first():
             raise ValidationError(u'昵称已存在')
+
+# 帖子提交 表
+class PostForm(Form):
+    body = PageDownField(u'说点什么吧:)', validators=[Required()])
+    submit = SubmitField(u'提交')

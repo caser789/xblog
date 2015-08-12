@@ -1,11 +1,12 @@
 # -*- coding:utf-8 -*-
 
-from flask import render_template, abort, redirect, url_for, flash
+from flask import render_template, abort, redirect, url_for, flash, \
+    request, current_app
 from . import main
 from flask.ext.login import login_required, current_user
-from .forms import EditProfileForm, EditProfileAdminForm
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db
-from ..models import Role, User
+from ..models import Role, User, Post, Permission
 from ..decorators import admin_required
 
 """
@@ -14,15 +15,36 @@ main中的路由
 """
 
 # 主页
-@main.route('/')
+# 显示全部帖子
+@main.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')
+    form = PostForm()
+    if current_user.can(Permission.WRITE_ARTICLES) and \
+        form.validate_on_submit():
+        post = Post(body=form.body.data,
+                    author=current_user._get_current_user())
+        db.session.add(post)
+        return rediredt(url_for('.index'))
+    page = request.args.get('page', 1, type=int)
+    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+        page, 
+        per_page=current_app.config['XBLOG_POSTS_PER_PAGE'],
+        error_out=False)
+    posts = pagination.items
+    return render_template('index.html', form=form, posts=posts, pagination)
 
 # 用户页面路由
 @main.route('/user/<username>')
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    return render_template('user.html', user=user)
+    page = request.args.get('page', 1, type=int)
+    pagination = user.posts.order_by(Post.timestamp.desc()).paginate(
+        page,
+        per_page=current_app.config['XBLOG_POSTS_PER_PAGE'],
+        error_out=False)
+    posts = pagination.items
+    return render_template('user.html', user=user, posts=posts,
+                           pagination=pagination)
 
 # 编辑个人信息
 @main.route('/edit-profile', methods=['GET', 'POST'])
@@ -68,3 +90,8 @@ def edit_profile_admin(id):
     form.location.data = user.location
     form.about_me.data = user.about_me
     return render_template('edit_profile.html', form=form, user=user)
+
+@main.route('/post/<int:id>')
+def post(id):
+    post=Post.query.get_or_404(id)
+    return render_template('post.html', posts=[post])

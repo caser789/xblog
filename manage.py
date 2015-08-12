@@ -2,7 +2,7 @@
 #!/usr/bin/env python
 import os
 from app import create_app, db
-from app.models import User, Role, Permission
+from app.models import User, Role, Permission, Post
 from flask.ext.script import Manager, Shell
 from flask.ext.migrate import Migrate, MigrateCommand
 
@@ -16,7 +16,8 @@ migrate = Migrate(app, db)
 # 添加数据库版本管理功能到命令行
 # 在命令行中自动导入调试需要的内容，比如数据库中的用户，数据库
 def make_shell_context():
-    return dict(app=app, db=db, User=User, Role=Role, Permission=Permission)
+    return dict(app=app, db=db, User=User, Role=Role, 
+        Permission=Permission, Post=Post)
 manager.add_command('shell', Shell(make_context=make_shell_context))
 manager.add_command('db', MigrateCommand)
 

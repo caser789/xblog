@@ -13,6 +13,7 @@ class Config:
     XBLOG_MAIL_SUBJECT_PREFIX = '[XBLOG]'
     XBLOG_MAIL_SENDER = 'm13488699851@163.com'
     XBLOG_ADMIN = os.environ.get('XBLOG_ADMIN')
+    XBLOG_POSTS_PER_PAGE = 20
 
     @staticmethod
     def init_app(app):
