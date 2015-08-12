@@ -1,13 +1,13 @@
 # -*- coding:utf-8 -*-
 
 from flask import render_template, abort, redirect, url_for, flash, \
-    request, current_app
+    request, current_app, make_response
 from . import main
 from flask.ext.login import login_required, current_user
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db
 from ..models import Role, User, Post, Permission
-from ..decorators import admin_required
+from ..decorators import admin_required, permission_required
 
 """
 main中的路由
@@ -26,13 +26,21 @@ def index():
         db.session.add(post)
         return rediredt(url_for('.index'))
     page = request.args.get('page', 1, type=int)
-    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+    show_followed = False
+    if current_user.is_authenticated():
+        show_followed = bool(request.cookies.get(
+            'show_followed', ''))
+    if show_followed:
+        query = current_user.followed_posts
+    else:
+        query = Post.query
+    pagination = query.order_by(Post.timestamp.desc()).paginate(
         page, 
         per_page=current_app.config['XBLOG_POSTS_PER_PAGE'],
         error_out=False)
     posts = pagination.items
     return render_template('index.html', form=form, posts=posts,
-        pagination=pagination)
+        pagination=pagination, show_followed=show_followed)
 
 # 用户页面路由
 @main.route('/user/<username>')
@@ -96,3 +104,81 @@ def edit_profile_admin(id):
 def post(id):
     post=Post.query.get_or_404(id)
     return render_template('post.html', posts=[post])
+
+@main.route('/follow/<username>')
+@lgin_required
+@permission_required(Permission.FOLLOW)
+def follow(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash(u'无效的用户名')
+        return redirect(url_for('.index'))
+    if current_user.is_following(user):
+        flash(u'您已经关注了此用户')
+        return redirect(url_for('.user', username=username))
+    current_user.follow(user)
+    flash(u'你现在关注了%s' % username)
+    return redirect(url_for('.user', username=username))
+
+@main.route('/unfollow/<username>')
+@login_required
+@permission_required(Permission.FOLLOW)
+def unfollow(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash(u'无效的用户名')
+        return redirect(url_for(.index))
+    if not current_user.is_following(user):
+        flash(u'您没有关注此用户')
+        return redirect(url_for('.user', username=username))
+    current_user.unfollow(user)
+    flash(u'您已经取消的对%s的关注' % username)
+    return redirect(url_for('.user', username=username))
+
+@main.route('/followers/<username>')
+def followers(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash(u'无效的用户名')
+        return redirect(url_for('.index'))
+    page = request.args.get('page', 1, type=int)
+    pagination = user.followers.paginate(page, 
+        per_page=current_app.config['XBLOG_FOLLOWERS_PER_PAGE'],
+        error_out=False)
+    # get the entry of table Follow
+    follows = [{'user': item.follower, 'timestamp': item.timestamp}
+        for item in pagination.items]
+    return render_template('followers.html', user=user,
+        title="Followers of", endpoint='.followers', 
+        pagination=pagination, follows=follows)
+
+@main.route('/followed_by/<username>')
+def followed_by(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash(u'无效的用户名')
+        return redirect(url_for('.index'))
+    page = request.args.get('page', 1, type=int)
+    pagination = user.followed.paginate(page,
+        per_page=current_app.config['XBLOG_FOLLOWERS_PER_PAGE'],
+        error_out=False)
+    follows = [{'user': item.followed, 'timestamp': item.timestamp} 
+        for item in pagination.items]
+    return render_template('followers.html', user=user, 
+        title="Followed by", endpoint=".followed_by",
+        pagination=pagination, follows=follows)
+
+@main.route('/all')
+@login_required
+def show_all():
+    resp = make_response(redirect(url_for('.index')))
+    resp.set_cookie('show_followed', '', max_age=30*24*60*60)
+    return resp
+
+@main.route('/followed')
+@login_required
+def show_followed():
+    resp = make_response(redirect(url_for('.index')))
+    resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
+    return resp
+    
