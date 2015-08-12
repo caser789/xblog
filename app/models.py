@@ -24,6 +24,15 @@ class Permission:
     MODERATE_COMMENTS = 0x08
     ADMINISTER = 0x80
 
+# secondary table of self ref ralationship of user
+class Follow(db.Model):
+    __tablename__ = 'follows'
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+        primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'),
+        primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
 # 用户角色表
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -79,6 +88,30 @@ class User(UserMixin,db.Model):
     avatar_hash = db.Column(db.String(32))
     # 加入帖子 属性
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    # self ref relationship
+    followd = db.relationship('Follow', foreign_keys=[Follow.follower_id],
+        backref=db.backref('follower', lazy='joined'),
+        lazy='dynamic',
+        cascade='all, delete-orphan')
+    followers = db.relationship('Follow', foreign_keys=[Follow.followed_id],
+        backref=db.backref('followed', lazy='joined'),
+        lazy='dynamic',
+        cascade='all, delete-orphan')
+    
+    def follow(self, user):
+        if not self.is_following(user):
+            f = Follow(follower=user)
+            self.followed.append(f)
+    def unfollow(self, user):
+        f = self.followed.filter_by(followed_id=user.id).first()
+        if f:
+            self.followed.remove(f)
+    def is_following(self, user):
+        return self.followed.filter_by(followed_id=user.id).first() is not None
+    def is_followed_by(self, user):
+        return self.followers.filter_by(follower_id=user.id).first() is \
+            not None
+
 
     # 初始化用户，设定默认权限
     def __init__(self, **kwargs):
@@ -205,7 +238,7 @@ class Post(db.Model):
     body_html = db.Column(db.Text)
 
     def __repr__(self):
-        return '<Post %r>' self.body
+        return '<Post %r>' %self.body
 
     # 生成 测试用的假数据
     @staticmethod
@@ -230,3 +263,5 @@ class Post(db.Model):
         output_format='html'), tags=allowed_tags, strip=True))
 
 db.event.listen(Post.body, 'set', Post.on_changed_body)
+
+

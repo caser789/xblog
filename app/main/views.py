@@ -31,7 +31,8 @@ def index():
         per_page=current_app.config['XBLOG_POSTS_PER_PAGE'],
         error_out=False)
     posts = pagination.items
-    return render_template('index.html', form=form, posts=posts, pagination)
+    return render_template('index.html', form=form, posts=posts,
+        pagination=pagination)
 
 # 用户页面路由
 @main.route('/user/<username>')
