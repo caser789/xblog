@@ -21,6 +21,7 @@
         </tr>
     </thread>
     {% for follow in follows %}
+    {% if follow.user != user %}
     <tr>
         <td>
             <a href="{{ url_for('.user', username=username) }}">
@@ -33,6 +34,7 @@
             {{ moment(follow.timestamp).format('L') }}
         </td>
     </tr>
+    {% endif %}
     {% endfor %}
 </table>
 <div class="pagination">
