@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
-{% import "_macros.html" as macro %}
+{% import "_macros.html" as macros %}
 
 {% block title %}薛蛟的博客{% endblock %}
 
@@ -36,6 +36,7 @@
 <div class="pagination">
 {{ macros.pagination_widget(pagination, '.index') }}
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
