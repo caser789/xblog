@@ -5,11 +5,11 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or "xuejiao's blog"
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
-    MAIL_SERVER = 'smtp.163.com'
-    MAIL_PORT =  994 #465 # 994 or 25
+    MAIL_SERVER = 'smtp.googlemail.com'
+    MAIL_PORT =  587
     MAIL_USE_TLS = True 
-    MAIL_USERNAME =  os.environ.get('_163_USERNAME') 
-    MAIL_PASSWORD =  os.environ.get('_163_PASSWORD')
+    MAIL_USERNAME =  os.environ.get('_GMAIL_USERNAME') 
+    MAIL_PASSWORD =  os.environ.get('_GMAIL_PASSWORD')
     XBLOG_MAIL_SUBJECT_PREFIX = '[XBLOG]'
     XBLOG_MAIL_SENDER = 'm13488699851@163.com'
     XBLOG_ADMIN = os.environ.get('XBLOG_ADMIN')
