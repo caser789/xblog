@@ -16,6 +16,7 @@ class Config:
     XBLOG_POSTS_PER_PAGE = 20
     XBLOG_FOLLOWERS_PER_PAGE = 50 
     XBLOG_COMMENTS_PER_PAGE = 30
+    SSL_DISABLE = True
     
 
     @staticmethod
@@ -40,12 +41,12 @@ class ProductionConfig(Config):
         Config.init_app(app)
 
         import logging
-        from logging.handlers import SMTPHanlder
+        from logging.handlers import SMTPHandler
         credentials = None
         secure = None
         if getattr(cls, 'MAIL_USERNAME', None) is not None:
             credentials = (cls.MAIL_USERNAME, cls.MAIL_PASSWORD)
-            if geeattr(cls, 'MAIL_USE_TLS', None):
+            if getattr(cls, 'MAIL_USE_TLS', None):
                 secure = ()
         mail_handler = SMTPHandler(
             mailhost=(cls.MAIL_SERVER, cls.MAIL_PORT),
@@ -56,11 +57,26 @@ class ProductionConfig(Config):
             secure=secure)
         mail_handler.setLevel(logging.ERROR)
         app.logger.addHandler(mail_handler)
+class HerokuConfig(ProductionConfig):
+    SSL_DISABLE = bool(os.environ.get('SSL_DISABLE'))
+    @classmethod
+    def init_app(cls, app):
+        ProductionConfig.init_app(app)
+
+        import logging
+        from logging import StreamHandler
+        file_handler = StreamHandler()
+        file_handler.setLevel(logging.WARNING)
+        app.logger.addHandler(file_handler)
+
+        from werkzeug.contrib.fixers import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app)
 
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
+    'heroku': HerokuConfig,
 
     'default': DevelopmentConfig
 }

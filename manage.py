@@ -37,7 +37,7 @@ def deploy():
     from app.models import Role, User
     upgrade()
     Role.insert_roles()
-    User.add_self_follows()
+    User.add_self_follow()
 
 if __name__ == '__main__':
     manager.run()
