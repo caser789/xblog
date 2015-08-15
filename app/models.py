@@ -169,6 +169,7 @@ class User(UserMixin,db.Model):
             return False
         self.confirmed = True
         db.session.add(self)
+        db.session.commit()
         return True
 
     # 用户的权限
