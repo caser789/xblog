@@ -25,7 +25,6 @@ def index():
         post = Post(body=form.body.data,
                     author=current_user._get_current_object())
         db.session.add(post)
-        db.session.commit()
         return redirect(url_for('.index'))
     page = request.args.get('page', 1, type=int)
     show_followed = False
