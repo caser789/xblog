@@ -4,7 +4,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or "xuejiao's blog"
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     MAIL_SERVER = 'smtp.googlemail.com'
     MAIL_PORT =  587
     MAIL_USE_TLS = True 
