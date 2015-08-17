@@ -4,6 +4,11 @@
 
 {% block title %}薛蛟的博客{% endblock %}
 
+{% block head %}
+{{ super() }}
+<meta property="wb:webmaster" content="f7dd2a4fff319616"/>
+{% endblock %}
+
 {% block page_content %}
 <div class="page-header">
     <h1>欢迎你, {% if current_user.is_authenticated() %}
